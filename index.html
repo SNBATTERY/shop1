@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Details</title>
+    <style>
+        /* Basic styles for the overlays */
+        #overlay, #detail-overlay {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 1px solid black;
+            z-index: 1000;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        #overlay img, #detail-overlay img {
+            max-width: 100%;
+            height: auto;
+        }
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: transparent;
+            border: none;
+            font-size: 24px;
+            color: red;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <form id="battery-form" style="display: none;">
+        <label for="manufacturer">Select Manufacturer:</label>
+        <select id="manufacturer">
+            <option value="">Select Manufacturer</option>
+            <option value="KIA">KIA</option>
+            <option value="MG">MG</option>
+        </select>
+
+        <label for="car-model">Select Car Model:</label>
+        <select id="car-model">
+            <option value="">Select Car Model</option>
+        </select>
+
+        <button type="submit" onclick="displayBatteryInfo(event)">Show Battery Info</button>
+    </form>
+
+    <div id="overlay">
+        <button id="close-button" onclick="closeOverlay()">✖</button>
+        <div id="battery-images"></div>
+    </div>
+
+    <div id="detail-overlay"></div>
+
+    <script>
+        const carModels = {
+            "KIA": ["KIA Carnival"],
+            "MG": ["MG HECTOR Petrol"],
+        };
+
+        function showForm() {
+            document.getElementById('battery-form').style.display = 'block';
+            const manufacturerSelect = document.getElementById('manufacturer');
+            manufacturerSelect.onchange = function() {
+                const carModelSelect = document.getElementById('car-model');
+                const selectedManufacturer = this.value;
+                carModelSelect.innerHTML = '<option value="">Select Car Model</option>';
+                if (carModels[selectedManufacturer]) {
+                    carModels[selectedManufacturer].forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model;
+                        option.textContent = model;
+                        carModelSelect.appendChild(option);
+                    });
+                }
+            };
+        }
+
+        function displayBatteryInfo(event) {
+            event.preventDefault();
+            const carModel = document.getElementById('car-model').value;
+
+            let batteryDetails = {
+                "KIA Carnival": { 
+                    images: ["13a.jpeg", "13b.jpeg"], 
+                    modelNumbers: ["KIA Carnival Standard", "KIA Carnival Premium"], 
+                    prices: ["with old battery exchange:$140<br>\nwith old battery exchange:$140", "$170 (with old battery exchange)"], 
+                    descriptions: [
+                        "Standard battery for KIA Carnival with reliable performance.",
+                        "High-performance battery designed for optimal efficiency."
+                    ], 
+                    features: [
+                        "12V, 70Ah, 3-year warranty",
+                        "12V, 75Ah, 5-year warranty, quick charge"
+                    ],
+                    recommendations: [
+                        "Ideal for urban driving conditions",
+                        "Perfect for long-distance travel and heavy loads"
+                    ],
+                },
+                "MG HECTOR Petrol": { 
+                    images: ["path/to/mg_hector_battery.jpg", "path/to/mg_hector_battery2.jpg"], 
+                    modelNumbers: ["MG HECTOR Standard", "MG HECTOR Premium"], 
+                    prices: ["with old battery exchange:$140<br>\nwith old battery exchange:$140", "$160 (with old battery exchange)"], 
+                    descriptions: [
+                        "Reliable battery for MG HECTOR with solid performance.",
+                        "AGM battery with enhanced lifespan."
+                    ], 
+                    features: [
+                        "12V, 60Ah, 2-year warranty",
+                        "12V, 65Ah, 4-year warranty, fast charging capability",
+                        "Temperature-resistant design",
+                        "Maintenance-free operation"
+                    ],
+                    recommendations: [
+                        "Best for city commutes",
+                        "Great for those who need reliability for road trips",
+                        "Optimal for families and larger vehicles"
+                    ],
+                },
+            };
+
+            const selectedDetails = batteryDetails[carModel];
+            if (selectedDetails) {
+                const batteryImagesContainer = document.getElementById('battery-images');
+                batteryImagesContainer.innerHTML = '';
+
+                selectedDetails.images.forEach((image, index) => {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = image;
+                    imgElement.alt = `${selectedDetails.modelNumbers[index]} Image`;
+                    batteryImagesContainer.appendChild(imgElement);
+
+                    const detailsElement = document.createElement('div');
+                    detailsElement.innerHTML = `
+                        <h3>${selectedDetails.modelNumbers[index]}</h3>
+                        <p><strong>Price:</strong> ${selectedDetails.prices[index]}</p>
+                        <p><strong>Description:</strong> ${selectedDetails.descriptions[index]}</p>
+                        <p><strong>Features:</strong> ${selectedDetails.features.join(', ')}</p>
+                        <p><strong>Recommended For:</strong> ${selectedDetails.recommendations.join(', ')}</p>
+                        <button onclick="redirectToWhatsApp('${selectedDetails.modelNumbers[index]}', '${selectedDetails.prices[index]}', '${selectedDetails.descriptions[index]}')">Order</button>
+                    `;
+                    batteryImagesContainer.appendChild(detailsElement);
+                });
+
+                document.getElementById('overlay').style.display = 'flex';
+            } else {
+                alert("No battery details found for this car model.");
+            }
+        }
+
+        function redirectToWhatsApp(model, price, description) {
+            const message = `I'm interested in the following battery:\n\n` +
+                            `**Model:** ${model}\n` +
+                            `**Price:** ${price}\n` +
+                            `**Description:** ${description}\n` +
+                            `Please provide further details.`;
+            const phoneNumber = '1234567890'; // Replace with your actual WhatsApp number
+            const url = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        function closeOverlay() {
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        window.onload = function() {
+            showForm();
+        }
+    </script>
+</body>
+</html>
